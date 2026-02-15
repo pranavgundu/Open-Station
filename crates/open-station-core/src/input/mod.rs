@@ -1,6 +1,6 @@
-use std::collections::HashMap;
-use gilrs::{Gilrs, GamepadId, EventType};
+use gilrs::{EventType, GamepadId, Gilrs};
 use open_station_protocol::types::JoystickData;
+use std::collections::HashMap;
 
 pub mod mapping;
 
@@ -57,28 +57,33 @@ impl JoystickManager {
 
     /// Get joystick data for all 6 slots (for sending to roboRIO)
     pub fn get_joystick_data(&self) -> Vec<JoystickData> {
-        self.slots.iter().map(|slot| {
-            match slot {
+        self.slots
+            .iter()
+            .map(|slot| match slot {
                 Some(js) if js.connected => self.read_gamepad(js.gilrs_id),
                 _ => JoystickData::default(),
-            }
-        }).collect()
+            })
+            .collect()
     }
 
     /// Get joystick info for the UI
     pub fn get_joystick_info(&self) -> Vec<JoystickInfo> {
-        self.slots.iter().enumerate().filter_map(|(i, slot)| {
-            slot.as_ref().map(|js| JoystickInfo {
-                slot: i as u8,
-                uuid: js.uuid.clone(),
-                name: js.name.clone(),
-                locked: js.locked,
-                connected: js.connected,
-                axis_count: 6,  // standard FRC
-                button_count: 10,
-                pov_count: 1,
+        self.slots
+            .iter()
+            .enumerate()
+            .filter_map(|(i, slot)| {
+                slot.as_ref().map(|js| JoystickInfo {
+                    slot: i as u8,
+                    uuid: js.uuid.clone(),
+                    name: js.name.clone(),
+                    locked: js.locked,
+                    connected: js.connected,
+                    axis_count: 6, // standard FRC
+                    button_count: 10,
+                    pov_count: 1,
+                })
             })
-        }).collect()
+            .collect()
     }
 
     /// Reorder joysticks by UUID list
@@ -163,7 +168,9 @@ impl JoystickManager {
 
     /// Check if any joystick is connected
     pub fn any_connected(&self) -> bool {
-        self.slots.iter().any(|s| s.as_ref().map_or(false, |js| js.connected))
+        self.slots
+            .iter()
+            .any(|s| s.as_ref().map_or(false, |js| js.connected))
     }
 
     // Private helpers

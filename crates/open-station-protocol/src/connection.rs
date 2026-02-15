@@ -125,7 +125,8 @@ impl ConnectionManager {
             let start = Instant::now();
 
             while start.elapsed() < browse_timeout {
-                if let Ok(event) = timeout(Duration::from_millis(100), receiver.recv_async()).await {
+                if let Ok(event) = timeout(Duration::from_millis(100), receiver.recv_async()).await
+                {
                     if let Ok(mdns_sd::ServiceEvent::ServiceResolved(info)) = event {
                         // Check if this is the roboRIO we're looking for
                         if info.get_fullname().contains(&self.team.to_string()) {
@@ -138,7 +139,8 @@ impl ConnectionManager {
             }
 
             None::<SocketAddr>
-        }).await;
+        })
+        .await;
 
         mdns_result.ok().flatten()
     }
@@ -151,7 +153,12 @@ impl ConnectionManager {
     /// - `tcp_outbound_rx`: receives outbound TCP frames to send
     pub async fn run(
         &mut self,
-        mut control_rx: mpsc::UnboundedReceiver<(ControlFlags, RequestFlags, Vec<JoystickData>, Alliance)>,
+        mut control_rx: mpsc::UnboundedReceiver<(
+            ControlFlags,
+            RequestFlags,
+            Vec<JoystickData>,
+            Alliance,
+        )>,
         packet_tx: mpsc::UnboundedSender<incoming::RioPacket>,
         tcp_message_tx: mpsc::UnboundedSender<TcpMessage>,
         mut tcp_outbound_rx: mpsc::UnboundedReceiver<Vec<u8>>,
@@ -210,7 +217,10 @@ impl ConnectionManager {
             let mut tcp_stream: Option<TcpStream> = None;
             let mut tcp_reader = TcpFrameReader::new();
             let mut tcp_read_buf = vec![0u8; 4096];
-            let mut tcp_connect_attempt = Box::pin(timeout(Duration::from_secs(3), TcpStream::connect(tcp_target)));
+            let mut tcp_connect_attempt = Box::pin(timeout(
+                Duration::from_secs(3),
+                TcpStream::connect(tcp_target),
+            ));
 
             // Main UDP send/receive loop
             let mut connection_active = true;
@@ -352,10 +362,16 @@ mod tests {
 
     #[test]
     fn test_team_to_ip() {
-        assert_eq!(ConnectionManager::team_to_ip(1234).to_string(), "10.12.34.2");
+        assert_eq!(
+            ConnectionManager::team_to_ip(1234).to_string(),
+            "10.12.34.2"
+        );
         assert_eq!(ConnectionManager::team_to_ip(254).to_string(), "10.2.54.2");
         assert_eq!(ConnectionManager::team_to_ip(1).to_string(), "10.0.1.2");
-        assert_eq!(ConnectionManager::team_to_ip(9999).to_string(), "10.99.99.2");
+        assert_eq!(
+            ConnectionManager::team_to_ip(9999).to_string(),
+            "10.99.99.2"
+        );
     }
 
     #[test]
@@ -377,9 +393,7 @@ mod tests {
     #[test]
     fn test_backoff_capping() {
         // Test that backoff calculation caps at 2 seconds
-        let backoff = |attempt: u32| -> u64 {
-            std::cmp::min(100 * 2u64.pow(attempt), 2000)
-        };
+        let backoff = |attempt: u32| -> u64 { std::cmp::min(100 * 2u64.pow(attempt), 2000) };
         assert_eq!(backoff(0), 100);
         assert_eq!(backoff(1), 200);
         assert_eq!(backoff(2), 400);

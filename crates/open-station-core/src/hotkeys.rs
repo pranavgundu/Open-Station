@@ -1,7 +1,10 @@
-use tokio::sync::mpsc;
-use std::sync::{Arc, Mutex, atomic::{AtomicBool, Ordering}};
 use std::collections::HashSet;
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc, Mutex,
+};
 use std::thread;
+use tokio::sync::mpsc;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum HotkeyAction {
@@ -60,7 +63,9 @@ impl HotkeyManager {
                             rdev::Key::F1 => {
                                 let _ = tx.send(HotkeyAction::RescanJoysticks);
                             }
-                            rdev::Key::LeftBracket | rdev::Key::RightBracket | rdev::Key::BackSlash => {
+                            rdev::Key::LeftBracket
+                            | rdev::Key::RightBracket
+                            | rdev::Key::BackSlash => {
                                 // Check if all three enable keys are pressed
                                 if pressed.contains(&rdev::Key::LeftBracket)
                                     && pressed.contains(&rdev::Key::RightBracket)

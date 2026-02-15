@@ -27,6 +27,9 @@ export interface JoystickInfo {
   axis_count: number;
   button_count: number;
   pov_count: number;
+  axes: number[];
+  buttons: boolean[];
+  povs: number[];
 }
 
 export interface TcpMessagePayload {

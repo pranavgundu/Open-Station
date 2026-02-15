@@ -1,6 +1,6 @@
-use std::time::{Duration, Instant};
-use open_station_protocol::types::Mode;
 use crate::config::PracticeTiming;
+use open_station_protocol::types::Mode;
+use std::time::{Duration, Instant};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PracticePhase {
@@ -16,11 +16,11 @@ pub enum PracticePhase {
 #[derive(Debug, Clone)]
 pub struct PracticeTick {
     pub phase: PracticePhase,
-    pub elapsed: Duration,     // time in current phase
-    pub remaining: Duration,   // time left in current phase
-    pub should_enable: bool,   // true on transition INTO auto or teleop
-    pub should_disable: bool,  // true on transition OUT of auto/teleop
-    pub mode: Option<Mode>,    // what mode to set (Some only on transitions)
+    pub elapsed: Duration,    // time in current phase
+    pub remaining: Duration,  // time left in current phase
+    pub should_enable: bool,  // true on transition INTO auto or teleop
+    pub should_disable: bool, // true on transition OUT of auto/teleop
+    pub mode: Option<Mode>,   // what mode to set (Some only on transitions)
 }
 
 pub struct PracticeMode {
@@ -65,7 +65,10 @@ impl PracticeMode {
     /// Call every ~20ms. Returns what the DS should do.
     pub fn tick(&mut self) -> PracticeTick {
         let now = Instant::now();
-        let elapsed = self.phase_start.map(|s| now.duration_since(s)).unwrap_or_default();
+        let elapsed = self
+            .phase_start
+            .map(|s| now.duration_since(s))
+            .unwrap_or_default();
 
         let phase_duration = self.phase_duration();
 
@@ -76,14 +79,27 @@ impl PracticeMode {
             }
         }
 
-        let elapsed = self.phase_start.map(|s| now.duration_since(s)).unwrap_or_default();
-        let remaining = self.phase_duration()
+        let elapsed = self
+            .phase_start
+            .map(|s| now.duration_since(s))
+            .unwrap_or_default();
+        let remaining = self
+            .phase_duration()
             .map(|d| d.saturating_sub(elapsed))
             .unwrap_or_default();
 
         let transitioning = self.phase != self.prev_phase;
-        let should_enable = transitioning && matches!(self.phase, PracticePhase::Autonomous | PracticePhase::Teleop) && !self.a_stopped;
-        let should_disable = transitioning && matches!(self.phase, PracticePhase::Delay | PracticePhase::Done | PracticePhase::Countdown);
+        let should_enable = transitioning
+            && matches!(
+                self.phase,
+                PracticePhase::Autonomous | PracticePhase::Teleop
+            )
+            && !self.a_stopped;
+        let should_disable = transitioning
+            && matches!(
+                self.phase,
+                PracticePhase::Delay | PracticePhase::Done | PracticePhase::Countdown
+            );
 
         let mode = if transitioning {
             match self.phase {
@@ -96,12 +112,13 @@ impl PracticeMode {
         };
 
         // Handle A-Stop: if a_stopped and we just transitioned to teleop, enable
-        let should_enable = if self.phase == PracticePhase::Teleop && transitioning && self.a_stopped {
-            self.a_stopped = false;
-            true
-        } else {
-            should_enable
-        };
+        let should_enable =
+            if self.phase == PracticePhase::Teleop && transitioning && self.a_stopped {
+                self.a_stopped = false;
+                true
+            } else {
+                should_enable
+            };
 
         // A-Stop should disable during auto
         let should_disable = if self.a_stopped && self.phase == PracticePhase::Autonomous {
@@ -137,7 +154,9 @@ impl PracticeMode {
     fn phase_duration(&self) -> Option<Duration> {
         match self.phase {
             PracticePhase::Idle => None,
-            PracticePhase::Countdown => Some(Duration::from_secs(self.timing.countdown_secs as u64)),
+            PracticePhase::Countdown => {
+                Some(Duration::from_secs(self.timing.countdown_secs as u64))
+            }
             PracticePhase::Autonomous => Some(Duration::from_secs(self.timing.auto_secs as u64)),
             PracticePhase::Delay => Some(Duration::from_secs(self.timing.delay_secs as u64)),
             PracticePhase::Teleop => Some(Duration::from_secs(self.timing.teleop_secs as u64)),

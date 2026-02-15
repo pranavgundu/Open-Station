@@ -8,9 +8,15 @@ interface Props {
 
 export default function OperationTab({ state }: Props) {
   const cmd = useTauriCommand();
+  const [selectedMode, setSelectedMode] = useState(state.mode);
   const [elapsedMs, setElapsedMs] = useState(0);
   const enabledRef = useRef(state.enabled);
   const timerRef = useRef<ReturnType<typeof setInterval>>(undefined);
+
+  // Sync selectedMode with backend when backend state changes
+  useEffect(() => {
+    setSelectedMode(state.mode);
+  }, [state.mode]);
 
   useEffect(() => {
     if (state.enabled && !enabledRef.current) {
@@ -29,6 +35,11 @@ export default function OperationTab({ state }: Props) {
     return `${m}:${(s % 60).toString().padStart(2, "0")}`;
   };
 
+  const handleModeSelect = (mode: string) => {
+    setSelectedMode(mode);
+    cmd.setMode(mode.toLowerCase());
+  };
+
   const modes = ["Teleoperated", "Autonomous", "Test"];
   const isPractice = state.practice_phase !== "Idle" && state.practice_phase !== "Done";
 
@@ -39,9 +50,9 @@ export default function OperationTab({ state }: Props) {
         {modes.map(m => (
           <button
             key={m}
-            onClick={() => cmd.setMode(m.toLowerCase())}
-            className={`text-left px-2 py-1 rounded text-xs ${
-              state.mode === m ? "bg-blue-600 text-white" : "bg-[#2a2a2a] text-gray-300 hover:bg-[#333]"
+            onClick={() => handleModeSelect(m)}
+            className={`text-left px-2 py-1 rounded text-xs transition-colors ${
+              selectedMode === m ? "bg-blue-600 text-white" : "bg-[#2a2a2a] text-gray-300 hover:bg-[#333]"
             }`}
           >
             {m}
@@ -49,7 +60,7 @@ export default function OperationTab({ state }: Props) {
         ))}
         <button
           onClick={() => isPractice ? cmd.stopPracticeMode() : cmd.startPracticeMode()}
-          className={`text-left px-2 py-1 rounded text-xs ${
+          className={`text-left px-2 py-1 rounded text-xs transition-colors ${
             isPractice ? "bg-orange-600 text-white" : "bg-[#2a2a2a] text-gray-300 hover:bg-[#333]"
           }`}
         >
@@ -62,13 +73,13 @@ export default function OperationTab({ state }: Props) {
         <button
           onClick={() => cmd.enable()}
           disabled={!state.connected || !state.code_running || state.estopped}
-          className="flex-1 py-2 rounded font-bold text-xs bg-green-600 hover:bg-green-500 disabled:bg-green-900 disabled:text-green-700 disabled:cursor-not-allowed"
+          className="flex-1 py-2 rounded font-bold text-xs bg-green-600 hover:bg-green-500 disabled:bg-green-900 disabled:text-green-700 disabled:cursor-not-allowed transition-colors"
         >
           Enable
         </button>
         <button
           onClick={() => cmd.disable()}
-          className="flex-1 py-2 rounded font-bold text-xs bg-red-600 hover:bg-red-500"
+          className="flex-1 py-2 rounded font-bold text-xs bg-red-600 hover:bg-red-500 transition-colors"
         >
           Disable
         </button>

@@ -1,8 +1,8 @@
-use tokio::sync::{mpsc, watch};
-use crate::types::*;
 use crate::connection::{ConnectionManager, ConnectionState};
 use crate::packet::incoming::RioPacket;
 use crate::packet::tcp;
+use crate::types::*;
+use tokio::sync::{mpsc, watch};
 
 /// Internal channels needed to run the driver station
 struct DsChannels {
@@ -143,12 +143,14 @@ impl DriverStation {
 
         // 2. Spawn ConnectionManager::run()
         tokio::spawn(async move {
-            conn_mgr.run(
-                channels.control_rx,
-                channels.packet_tx,
-                channels.tcp_message_tx,
-                channels.tcp_outbound_rx,
-            ).await;
+            conn_mgr
+                .run(
+                    channels.control_rx,
+                    channels.packet_tx,
+                    channels.tcp_message_tx,
+                    channels.tcp_outbound_rx,
+                )
+                .await;
         });
 
         // 3. Spawn a task that reads from packet_rx (RioPackets from UDP):
@@ -300,8 +302,12 @@ fn update_robot_state(state: &mut RobotState, packet: &RioPacket, conn_state: Co
     for tag in &packet.tags {
         match tag {
             crate::packet::incoming::RioTag::CanMetrics(can) => state.telemetry.can = *can,
-            crate::packet::incoming::RioTag::PdpData(currents) => state.telemetry.pdp_currents = currents.clone(),
-            crate::packet::incoming::RioTag::CpuUsage(cpu) => state.telemetry.cpu_usage = cpu.clone(),
+            crate::packet::incoming::RioTag::PdpData(currents) => {
+                state.telemetry.pdp_currents = currents.clone()
+            }
+            crate::packet::incoming::RioTag::CpuUsage(cpu) => {
+                state.telemetry.cpu_usage = cpu.clone()
+            }
             crate::packet::incoming::RioTag::RamUsage(ram) => state.telemetry.ram_usage = *ram,
             crate::packet::incoming::RioTag::DiskUsage(disk) => state.telemetry.disk_free = *disk,
             _ => {}

@@ -1,8 +1,8 @@
-use tauri::State;
-use std::sync::Mutex;
+use open_station_core::config::PracticeTiming;
 use open_station_core::state::AppState;
 use open_station_protocol::types::*;
-use open_station_core::config::PracticeTiming;
+use std::sync::Mutex;
+use tauri::State;
 
 pub type AppStateHandle = Mutex<AppState>;
 
@@ -45,7 +45,10 @@ pub fn set_alliance(state: State<'_, AppStateHandle>, color: String, station: u8
         _ => return,
     };
     if station >= 1 && station <= 3 {
-        state.lock().unwrap().set_alliance(Alliance::new(c, station));
+        state
+            .lock()
+            .unwrap()
+            .set_alliance(Alliance::new(c, station));
     }
 }
 
@@ -80,7 +83,13 @@ pub fn stop_practice_mode(state: State<'_, AppStateHandle>) {
 }
 
 #[tauri::command]
-pub fn set_practice_timing(state: State<'_, AppStateHandle>, countdown: u32, auto_secs: u32, delay: u32, teleop: u32) {
+pub fn set_practice_timing(
+    state: State<'_, AppStateHandle>,
+    countdown: u32,
+    auto_secs: u32,
+    delay: u32,
+    teleop: u32,
+) {
     state.lock().unwrap().set_practice_timing(PracticeTiming {
         countdown_secs: countdown,
         auto_secs,

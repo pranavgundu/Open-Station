@@ -3,9 +3,9 @@
 mod commands;
 mod events;
 
-use std::sync::Mutex;
 use open_station_core::config::Config;
 use open_station_core::state::AppState;
+use std::sync::Mutex;
 
 fn main() {
     env_logger::init();

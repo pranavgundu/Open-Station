@@ -7,9 +7,7 @@ pub struct TcpFrameReader {
 
 impl TcpFrameReader {
     pub fn new() -> Self {
-        TcpFrameReader {
-            buffer: Vec::new(),
-        }
+        TcpFrameReader { buffer: Vec::new() }
     }
 
     /// Feed bytes from the TCP stream
@@ -105,7 +103,8 @@ pub fn parse_tcp_message(tag: u8, payload: &[u8]) -> Option<TcpMessage> {
             let timestamp = f64::from_be_bytes(timestamp_bytes);
 
             let sequence = u16::from_be_bytes([payload[8], payload[9]]);
-            let error_code = i32::from_be_bytes([payload[10], payload[11], payload[12], payload[13]]);
+            let error_code =
+                i32::from_be_bytes([payload[10], payload[11], payload[12], payload[13]]);
             let flags = u16::from_be_bytes([payload[14], payload[15]]);
             let is_error = (flags & 1) != 0;
 

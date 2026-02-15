@@ -1,11 +1,11 @@
-use tokio::sync::watch;
-use serde::Serialize;
-use open_station_protocol::types::*;
-use open_station_protocol::driver_station::{DriverStation, DsReceiver};
 use crate::config::Config;
+use crate::hotkeys::HotkeyManager;
 use crate::input::JoystickManager;
 use crate::practice::PracticeMode;
-use crate::hotkeys::HotkeyManager;
+use open_station_protocol::driver_station::{DriverStation, DsReceiver};
+use open_station_protocol::types::*;
+use serde::Serialize;
+use tokio::sync::watch;
 
 /// Flattened state for the UI — serialized and sent via Tauri events
 #[derive(Debug, Clone, Serialize)]
@@ -45,6 +45,9 @@ pub struct JoystickInfoSerialized {
     pub axis_count: u8,
     pub button_count: u8,
     pub pov_count: u8,
+    pub axes: Vec<i8>,
+    pub buttons: Vec<bool>,
+    pub povs: Vec<i16>,
 }
 
 impl Default for UiState {
@@ -240,10 +243,7 @@ impl AppState {
 
     pub fn launch_dashboard(&self) {
         if let Some(cmd) = &self.config.dashboard_command {
-            let _ = std::process::Command::new("sh")
-                .arg("-c")
-                .arg(cmd)
-                .spawn();
+            let _ = std::process::Command::new("sh").arg("-c").arg(cmd).spawn();
         }
     }
 
@@ -258,17 +258,26 @@ impl AppState {
     // === Internal ===
 
     fn build_ui_state(&self) -> UiState {
-        let joystick_info: Vec<JoystickInfoSerialized> = self.joysticks.get_joystick_info()
+        let joystick_data = self.joysticks.get_joystick_data();
+        let joystick_info: Vec<JoystickInfoSerialized> = self
+            .joysticks
+            .get_joystick_info()
             .into_iter()
-            .map(|j| JoystickInfoSerialized {
-                slot: j.slot,
-                uuid: j.uuid,
-                name: j.name,
-                locked: j.locked,
-                connected: j.connected,
-                axis_count: j.axis_count,
-                button_count: j.button_count,
-                pov_count: j.pov_count,
+            .map(|j| {
+                let data = joystick_data.get(j.slot as usize);
+                JoystickInfoSerialized {
+                    slot: j.slot,
+                    uuid: j.uuid,
+                    name: j.name,
+                    locked: j.locked,
+                    connected: j.connected,
+                    axis_count: j.axis_count,
+                    button_count: j.button_count,
+                    pov_count: j.pov_count,
+                    axes: data.map(|d| d.axes.clone()).unwrap_or_default(),
+                    buttons: data.map(|d| d.buttons.clone()).unwrap_or_default(),
+                    povs: data.map(|d| d.povs.clone()).unwrap_or_default(),
+                }
             })
             .collect();
 
