@@ -3,6 +3,7 @@ use tauri::{AppHandle, Emitter};
 use tokio::sync::watch;
 
 /// Spawn a background task that emits "robot-state" events whenever state changes
+#[allow(dead_code)]
 pub fn spawn_state_emitter(app: AppHandle, mut rx: watch::Receiver<UiState>) {
     tauri::async_runtime::spawn(async move {
         loop {
@@ -15,6 +16,7 @@ pub fn spawn_state_emitter(app: AppHandle, mut rx: watch::Receiver<UiState>) {
 }
 
 /// Spawn a background task that emits "stdout-message" events
+#[allow(dead_code)]
 pub fn spawn_stdout_emitter(app: AppHandle, mut rx: tokio::sync::mpsc::UnboundedReceiver<String>) {
     tauri::async_runtime::spawn(async move {
         while let Some(line) = rx.recv().await {
@@ -24,6 +26,7 @@ pub fn spawn_stdout_emitter(app: AppHandle, mut rx: tokio::sync::mpsc::Unbounded
 }
 
 /// Spawn a background task that emits "tcp-message" events
+#[allow(dead_code)]
 pub fn spawn_message_emitter(
     app: AppHandle,
     mut rx: tokio::sync::mpsc::UnboundedReceiver<open_station_protocol::types::TcpMessage>,

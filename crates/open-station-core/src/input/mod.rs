@@ -170,7 +170,7 @@ impl JoystickManager {
     pub fn any_connected(&self) -> bool {
         self.slots
             .iter()
-            .any(|s| s.as_ref().map_or(false, |js| js.connected))
+            .any(|s| s.as_ref().is_some_and(|js| js.connected))
     }
 
     // Private helpers

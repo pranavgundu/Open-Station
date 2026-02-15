@@ -98,8 +98,7 @@ impl Config {
     pub fn save(&self) -> Result<(), std::io::Error> {
         let dir = Self::config_dir();
         fs::create_dir_all(&dir)?;
-        let contents = toml::to_string_pretty(self)
-            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+        let contents = toml::to_string_pretty(self).map_err(std::io::Error::other)?;
         fs::write(Self::config_path(), contents)
     }
 
@@ -116,8 +115,7 @@ impl Config {
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent)?;
         }
-        let contents = toml::to_string_pretty(self)
-            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+        let contents = toml::to_string_pretty(self).map_err(std::io::Error::other)?;
         fs::write(path, contents)
     }
 }
@@ -145,10 +143,12 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("config.toml");
 
-        let mut config = Config::default();
-        config.team_number = 1234;
-        config.use_usb = true;
-        config.game_data = "LRL".to_string();
+        let mut config = Config {
+            team_number: 1234,
+            use_usb: true,
+            game_data: "LRL".to_string(),
+            ..Default::default()
+        };
         config.joystick_locks.insert("uuid-123".to_string(), 0);
 
         config.save_to(&path).unwrap();
