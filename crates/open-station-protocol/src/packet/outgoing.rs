@@ -49,13 +49,7 @@ pub fn append_joystick_tag(buf: &mut Vec<u8>, joystick: &JoystickData) {
     let pov_count = joystick.povs.len() as u8;
 
     // size = tag(1) + axis_count(1) + axes(N) + button_count(1) + button_bytes(M) + pov_count(1) + povs(P*2)
-    let size: u8 = 1
-        + 1
-        + axis_count
-        + 1
-        + button_byte_count as u8
-        + 1
-        + pov_count * 2;
+    let size: u8 = 1 + 1 + axis_count + 1 + button_byte_count as u8 + 1 + pov_count * 2;
 
     buf.push(size);
     buf.push(0x0c); // joystick tag
@@ -100,9 +94,9 @@ pub fn append_joystick_tag(buf: &mut Vec<u8>, joystick: &JoystickData) {
 /// - month: 0-11 (January = 0)
 /// - year: year - 1900
 pub fn append_datetime_tag(buf: &mut Vec<u8>) {
-    use chrono::Utc;
     use chrono::Datelike;
     use chrono::Timelike;
+    use chrono::Utc;
 
     let now = Utc::now();
 
@@ -194,19 +188,19 @@ mod tests {
         // Verify structure is correct
         assert_eq!(buf[1], 0x0c);
         assert_eq!(buf[2], 6); // 6 axes
-        // axes at indices 3-8
+                               // axes at indices 3-8
         assert_eq!(buf[3], 0i8 as u8);
         assert_eq!(buf[4], 127i8 as u8);
         assert_eq!(buf[5], (-128i8) as u8);
         assert_eq!(buf[9], 12); // 12 buttons
-        // 12 buttons = 2 bytes
-        // buttons: [true, false, true, false, false, false, false, false, true, false, false, true]
-        // byte 0: bits 0-7 = 1,0,1,0,0,0,0,0 = 0b00000101 = 0x05
-        // byte 1: bits 0-3 = 1,0,0,1 = 0b00001001 = 0x09
+                                // 12 buttons = 2 bytes
+                                // buttons: [true, false, true, false, false, false, false, false, true, false, false, true]
+                                // byte 0: bits 0-7 = 1,0,1,0,0,0,0,0 = 0b00000101 = 0x05
+                                // byte 1: bits 0-3 = 1,0,0,1 = 0b00001001 = 0x09
         assert_eq!(buf[10], 0x05);
         assert_eq!(buf[11], 0x09);
         assert_eq!(buf[12], 1); // 1 POV
-        // POV 90 = 0x005A big-endian
+                                // POV 90 = 0x005A big-endian
         assert_eq!(buf[13], 0x00);
         assert_eq!(buf[14], 0x5A);
     }
