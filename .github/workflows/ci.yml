@@ -9,6 +9,9 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
+permissions:
+  contents: write
+
 jobs:
   rust-check:
     name: Rust Check & Clippy
@@ -39,13 +42,21 @@ jobs:
           workspaces: ". -> target"
 
       - name: Auto-format code
+        if: github.event_name == 'push'
         run: cargo fmt --all
 
       - name: Commit and push formatting changes
+        if: github.event_name == 'push'
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git diff --quiet || (git add -A && git commit -m "chore: apply cargo fmt" && git push)
+          if ! git diff --quiet; then
+            git add -A
+            git commit -m "chore: apply cargo fmt
+            
+            Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
+            git push
+          fi
 
       - name: Check formatting
         run: cargo fmt --all -- --check
