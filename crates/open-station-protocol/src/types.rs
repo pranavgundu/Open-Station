@@ -104,8 +104,7 @@ impl Alliance {
 // ---------------------------------------------------------------------------
 
 /// Flags sent from the Driver Station to the robot in each control packet.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[derive(Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct ControlFlags {
     /// Emergency stop — bit 7.
     pub estop: bool,
@@ -152,8 +151,7 @@ impl ControlFlags {
 // ---------------------------------------------------------------------------
 
 /// Request flags sent from the Driver Station to the robot.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[derive(Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct RequestFlags {
     /// Request a RoboRIO reboot — bit 3.
     pub reboot_roborio: bool,
