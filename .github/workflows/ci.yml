@@ -38,6 +38,15 @@ jobs:
         with:
           workspaces: ". -> target"
 
+      - name: Auto-format code
+        run: cargo fmt --all
+
+      - name: Commit and push formatting changes
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git diff --quiet || (git add -A && git commit -m "chore: apply cargo fmt" && git push)
+
       - name: Check formatting
         run: cargo fmt --all -- --check
 

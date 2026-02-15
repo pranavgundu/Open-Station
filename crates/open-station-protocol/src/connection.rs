@@ -129,7 +129,8 @@ impl ConnectionManager {
             let start = Instant::now();
 
             while start.elapsed() < browse_timeout {
-                if let Ok(Ok(mdns_sd::ServiceEvent::ServiceResolved(info))) = timeout(Duration::from_millis(100), receiver.recv_async()).await
+                if let Ok(Ok(mdns_sd::ServiceEvent::ServiceResolved(info))) =
+                    timeout(Duration::from_millis(100), receiver.recv_async()).await
                 {
                     // Check if this is the roboRIO we're looking for
                     if info.get_fullname().contains(&self.team.to_string()) {
