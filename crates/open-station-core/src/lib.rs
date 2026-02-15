@@ -1,1 +1,5 @@
-// Modules will be added as they are implemented
+pub mod config;
+pub mod hotkeys;
+pub mod input;
+pub mod practice;
+pub mod state;

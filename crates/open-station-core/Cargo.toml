@@ -11,6 +11,7 @@ toml = "0.8"
 dirs = "6"
 log = "0.4"
 tokio = { version = "1", features = ["sync", "time", "rt-multi-thread", "macros"] }
+rdev = "0.5"
 
 [dev-dependencies]
 tempfile = "3"

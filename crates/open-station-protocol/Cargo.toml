@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-tokio = { version = "1", features = ["net", "rt-multi-thread", "sync", "time", "macros"] }
+tokio = { version = "1", features = ["net", "rt-multi-thread", "sync", "time", "macros", "io-util"] }
 mdns-sd = "0.11"
 log = "0.4"
 thiserror = "2"
