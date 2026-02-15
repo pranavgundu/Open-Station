@@ -5,8 +5,9 @@ use std::fmt;
 // ---------------------------------------------------------------------------
 
 /// The three operating modes of an FRC robot.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum Mode {
+    #[default]
     Teleop,
     Test,
     Autonomous,
@@ -30,12 +31,6 @@ impl Mode {
             0b10 => Some(Mode::Autonomous),
             _ => None,
         }
-    }
-}
-
-impl Default for Mode {
-    fn default() -> Self {
-        Mode::Teleop
     }
 }
 
@@ -110,6 +105,7 @@ impl Alliance {
 
 /// Flags sent from the Driver Station to the robot in each control packet.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Default)]
 pub struct ControlFlags {
     /// Emergency stop — bit 7.
     pub estop: bool,
@@ -119,17 +115,6 @@ pub struct ControlFlags {
     pub enabled: bool,
     /// Current operating mode — bits 0-1.
     pub mode: Mode,
-}
-
-impl Default for ControlFlags {
-    fn default() -> Self {
-        ControlFlags {
-            estop: false,
-            fms_connected: false,
-            enabled: false,
-            mode: Mode::default(),
-        }
-    }
 }
 
 impl ControlFlags {
@@ -168,20 +153,12 @@ impl ControlFlags {
 
 /// Request flags sent from the Driver Station to the robot.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Default)]
 pub struct RequestFlags {
     /// Request a RoboRIO reboot — bit 3.
     pub reboot_roborio: bool,
     /// Request a robot code restart — bit 2.
     pub restart_code: bool,
-}
-
-impl Default for RequestFlags {
-    fn default() -> Self {
-        RequestFlags {
-            reboot_roborio: false,
-            restart_code: false,
-        }
-    }
 }
 
 impl RequestFlags {

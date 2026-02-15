@@ -45,7 +45,7 @@ pub fn build_ds_packet(
 pub fn append_joystick_tag(buf: &mut Vec<u8>, joystick: &JoystickData) {
     let axis_count = joystick.axes.len() as u8;
     let button_count = joystick.buttons.len() as u8;
-    let button_byte_count = (button_count as usize + 7) / 8;
+    let button_byte_count = (button_count as usize).div_ceil(8);
     let pov_count = joystick.povs.len() as u8;
 
     // size = tag(1) + axis_count(1) + axes(N) + button_count(1) + button_bytes(M) + pov_count(1) + povs(P*2)
