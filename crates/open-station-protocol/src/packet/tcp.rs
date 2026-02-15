@@ -191,11 +191,12 @@ pub fn build_joystick_descriptor_frame(
     button_count: u8,
     pov_count: u8,
 ) -> Vec<u8> {
-    let mut payload = Vec::new();
-    payload.push(slot);
-    payload.push(0); // is_xbox
-    payload.push(0); // type
-    payload.push(name.len() as u8);
+    let mut payload = vec![
+        slot,
+        0, // is_xbox
+        0, // type
+        name.len() as u8,
+    ];
     payload.extend_from_slice(name.as_bytes());
     payload.push(axis_count);
     // axis_types would go here, but we'll skip for now

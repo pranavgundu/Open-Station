@@ -21,11 +21,15 @@ pub struct ConnectionManager {
     use_usb: bool,
     state: ConnectionState,
     target_addr: Option<SocketAddr>,
+    #[allow(dead_code)]
     sequence: u16,
+    #[allow(dead_code)]
     last_received: Option<Instant>,
     trip_times: Vec<f64>, // rolling window for avg trip time
     lost_packets: u32,
+    #[allow(dead_code)]
     sent_count: u32,
+    #[allow(dead_code)]
     received_count: u32,
 }
 
@@ -125,14 +129,12 @@ impl ConnectionManager {
             let start = Instant::now();
 
             while start.elapsed() < browse_timeout {
-                if let Ok(event) = timeout(Duration::from_millis(100), receiver.recv_async()).await
+                if let Ok(Ok(mdns_sd::ServiceEvent::ServiceResolved(info))) = timeout(Duration::from_millis(100), receiver.recv_async()).await
                 {
-                    if let Ok(mdns_sd::ServiceEvent::ServiceResolved(info)) = event {
-                        // Check if this is the roboRIO we're looking for
-                        if info.get_fullname().contains(&self.team.to_string()) {
-                            if let Some(addr) = info.get_addresses().iter().next() {
-                                return Some(SocketAddr::new(*addr, 1110));
-                            }
+                    // Check if this is the roboRIO we're looking for
+                    if info.get_fullname().contains(&self.team.to_string()) {
+                        if let Some(addr) = info.get_addresses().iter().next() {
+                            return Some(SocketAddr::new(*addr, 1110));
                         }
                     }
                 }
