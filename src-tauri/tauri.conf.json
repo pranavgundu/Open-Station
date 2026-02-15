@@ -1,0 +1,26 @@
+{
+  "productName": "Open Station",
+  "version": "0.1.0",
+  "identifier": "com.openstation.app",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:1420",
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Open Station",
+        "width": 1000,
+        "height": 400,
+        "minWidth": 800,
+        "minHeight": 300,
+        "resizable": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  }
+}

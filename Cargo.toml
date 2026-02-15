@@ -1,0 +1,7 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/open-station-protocol",
+    "crates/open-station-core",
+    "src-tauri",
+]
