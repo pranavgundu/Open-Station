@@ -78,6 +78,7 @@ pub struct AppState {
     ds_rx: Option<DsReceiver>,
     pub joysticks: JoystickManager,
     practice: PracticeMode,
+    #[allow(dead_code)]
     hotkeys: HotkeyManager,
     config: Config,
 

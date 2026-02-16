@@ -21,6 +21,7 @@ pub struct ConnectionManager {
     use_usb: bool,
     state: ConnectionState,
     target_addr: Option<SocketAddr>,
+    #[allow(dead_code)]
     sequence: u16,
     #[allow(dead_code)]
     last_received: Option<Instant>,
