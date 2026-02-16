@@ -178,7 +178,6 @@ impl JoystickManager {
     // Private helpers
 
     /// Scan all connected gamepads and assign them to slots
-    /// Scan all connected gamepads and assign them to slots
     fn scan_devices(&mut self) {
         let ids: Vec<GamepadId> = self.gilrs.gamepads().map(|(id, _)| id).collect();
         for id in ids {
