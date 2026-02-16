@@ -253,7 +253,6 @@ impl JoystickManager {
         let gamepad = self.gilrs.gamepad(id);
 
         // Read all 6 standard FRC axes
-        // Read all 6 standard FRC axes
         let mut axes = Vec::with_capacity(6);
 
         // Axis 0: Left Stick X
