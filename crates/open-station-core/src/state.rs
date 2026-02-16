@@ -78,7 +78,7 @@ pub struct AppState {
     ds: DriverStation,
     #[allow(dead_code)] // Will be used in run loop (Task 13)
     ds_rx: Option<DsReceiver>,
-    joysticks: JoystickManager,
+    pub joysticks: JoystickManager,
     practice: PracticeMode,
     #[allow(dead_code)] // Will be used in run loop (Task 13)
     hotkeys: HotkeyManager,
@@ -116,7 +116,7 @@ impl AppState {
         let (stdout_tx, stdout_rx) = tokio::sync::mpsc::unbounded_channel();
         let (message_tx, message_rx) = tokio::sync::mpsc::unbounded_channel();
 
-        Self {
+        let app_state = Self {
             ds,
             ds_rx: Some(ds_rx),
             joysticks,
@@ -132,7 +132,10 @@ impl AppState {
             stdout_rx: Some(stdout_rx),
             message_tx,
             message_rx: Some(message_rx),
-        }
+        };
+
+        app_state.update_ui_state();
+        app_state
     }
 
     /// Get a receiver for UI state updates
@@ -227,18 +230,27 @@ impl AppState {
 
     pub fn reorder_joysticks(&mut self, order: Vec<String>) {
         self.joysticks.reorder(order);
+        self.update_ui_state();
     }
 
     pub fn lock_joystick(&mut self, uuid: String, slot: u8) {
         self.joysticks.lock(&uuid, slot);
+        self.update_ui_state();
     }
 
     pub fn unlock_joystick(&mut self, uuid: String) {
         self.joysticks.unlock(&uuid);
+        self.update_ui_state();
     }
 
     pub fn rescan_joysticks(&mut self) {
         self.joysticks.rescan();
+        self.update_ui_state();
+    }
+
+    pub fn poll(&mut self) {
+        self.joysticks.poll();
+        self.update_ui_state();
     }
 
     pub fn launch_dashboard(&self) {

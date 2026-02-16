@@ -18,6 +18,7 @@ pub struct JoystickInfo {
 }
 
 /// A joystick mapped to an FRC slot
+#[derive(Debug)]
 struct JoystickSlot {
     uuid: String,
     name: String,
@@ -26,6 +27,7 @@ struct JoystickSlot {
     connected: bool,
 }
 
+#[derive(Debug)]
 pub struct JoystickManager {
     gilrs: Gilrs,
     slots: Vec<Option<JoystickSlot>>, // 6 slots
@@ -176,6 +178,7 @@ impl JoystickManager {
     // Private helpers
 
     /// Scan all connected gamepads and assign them to slots
+    /// Scan all connected gamepads and assign them to slots
     fn scan_devices(&mut self) {
         let ids: Vec<GamepadId> = self.gilrs.gamepads().map(|(id, _)| id).collect();
         for id in ids {
@@ -220,7 +223,7 @@ impl JoystickManager {
         if let Some(empty_slot_idx) = self.find_empty_slot() {
             self.slots[empty_slot_idx] = Some(JoystickSlot {
                 uuid,
-                name,
+                name: name.clone(),
                 gilrs_id: id,
                 locked: false,
                 connected: true,
@@ -251,38 +254,44 @@ impl JoystickManager {
         let gamepad = self.gilrs.gamepad(id);
 
         // Read all 6 standard FRC axes
+        // Read all 6 standard FRC axes
         let mut axes = Vec::with_capacity(6);
-        for axis_enum in [
-            gilrs::Axis::LeftStickX,
-            gilrs::Axis::LeftStickY,
-            gilrs::Axis::LeftZ,
-            gilrs::Axis::RightZ,
-            gilrs::Axis::RightStickX,
-            gilrs::Axis::RightStickY,
-        ] {
-            if let Some(axis_data) = gamepad.axis_data(axis_enum) {
-                // Convert from -1.0..1.0 to -128..127
-                let value: f32 = axis_data.value();
-                let scaled = (value * 127.0).clamp(-128.0, 127.0) as i8;
-                axes.push(scaled);
-            } else {
-                axes.push(0);
-            }
-        }
+
+        // Axis 0: Left Stick X
+        axes.push(self.read_axis_value(&gamepad, gilrs::Axis::LeftStickX));
+
+        // Axis 1: Left Stick Y
+        axes.push(self.read_axis_value(&gamepad, gilrs::Axis::LeftStickY));
+
+        // Axis 2: Left Trigger (Triggers are often buttons with values in gilrs)
+        // Use LeftTrigger2 (Analog). We avoid LeftTrigger because it maps to the bumper (L1).
+        let lt = self.read_button_value(&gamepad, gilrs::Button::LeftTrigger2);
+        axes.push(lt);
+
+        // Axis 3: Right Trigger
+        // Use RightTrigger2 (Analog). We avoid RightTrigger because it maps to the bumper (R1).
+        let rt = self.read_button_value(&gamepad, gilrs::Button::RightTrigger2);
+        axes.push(rt);
+
+        // Axis 4: Right Stick X
+        axes.push(self.read_axis_value(&gamepad, gilrs::Axis::RightStickX));
+
+        // Axis 5: Right Stick Y
+        axes.push(self.read_axis_value(&gamepad, gilrs::Axis::RightStickY));
 
         // Read all 10 standard FRC buttons
         let mut buttons = Vec::with_capacity(10);
         for button_enum in [
-            gilrs::Button::South,
-            gilrs::Button::East,
-            gilrs::Button::North,
-            gilrs::Button::West,
-            gilrs::Button::LeftTrigger,
-            gilrs::Button::RightTrigger,
-            gilrs::Button::Select,
-            gilrs::Button::Start,
-            gilrs::Button::LeftThumb,
-            gilrs::Button::RightThumb,
+            gilrs::Button::South,        // A -> 1
+            gilrs::Button::East,         // B -> 2
+            gilrs::Button::West,         // X -> 3
+            gilrs::Button::North,        // Y -> 4
+            gilrs::Button::LeftTrigger,  // LB -> 5
+            gilrs::Button::RightTrigger, // RB -> 6
+            gilrs::Button::Select,       // Back -> 7
+            gilrs::Button::Start,        // Start -> 8
+            gilrs::Button::LeftThumb,    // LS -> 9
+            gilrs::Button::RightThumb,   // RS -> 10
         ] {
             buttons.push(gamepad.is_pressed(button_enum));
         }
@@ -309,5 +318,21 @@ impl JoystickManager {
         // gilrs doesn't provide a true UUID, so we construct one from the ID
         let gamepad = self.gilrs.gamepad(id);
         format!("{:?}:{}", id, gamepad.name())
+    }
+
+    fn read_axis_value(&self, gamepad: &gilrs::Gamepad, axis: gilrs::Axis) -> i8 {
+        if let Some(data) = gamepad.axis_data(axis) {
+            (data.value() * 127.0).clamp(-128.0, 127.0) as i8
+        } else {
+            0
+        }
+    }
+
+    fn read_button_value(&self, gamepad: &gilrs::Gamepad, button: gilrs::Button) -> i8 {
+        if let Some(data) = gamepad.button_data(button) {
+            (data.value() * 127.0).clamp(-128.0, 127.0) as i8
+        } else {
+            0
+        }
     }
 }

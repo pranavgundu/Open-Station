@@ -6,8 +6,8 @@ interface Props {
   state: RobotState;
 }
 
-const AXIS_LABELS = ["X", "Y", "Z", "Rz", "Rx", "Ry"];
-const BUTTON_LABELS = ["1", "2", "3", "4", "LB", "RB", "Bk", "St", "LS", "RS"];
+const AXIS_LABELS = ["LS X", "LS Y", "LT", "RT", "RS X", "RS Y"];
+const BUTTON_LABELS = ["A", "B", "X", "Y", "LB", "RB", "Back", "Start", "LS", "RS"];
 
 function AxisBar({ label, value }: { label: string; value: number }) {
   // value is -128..127, normalize to -1..1
@@ -17,7 +17,7 @@ function AxisBar({ label, value }: { label: string; value: number }) {
 
   return (
     <div className="flex items-center gap-1.5 h-4">
-      <span className="text-[9px] text-gray-500 w-4 text-right font-mono">{label}</span>
+      <span className="text-[9px] text-gray-500 w-7 text-right font-mono">{label}</span>
       <div className="flex-1 h-2.5 bg-[#1a1a1a] rounded-sm relative overflow-hidden">
         {/* Center line */}
         <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gray-700" />
@@ -41,11 +41,10 @@ function ButtonGrid({ buttons }: { buttons: boolean[] }) {
       {buttons.map((pressed, i) => (
         <div
           key={i}
-          className={`w-6 h-5 rounded text-[9px] font-mono flex items-center justify-center transition-colors duration-75 ${
-            pressed
-              ? "bg-green-500 text-black font-bold"
-              : "bg-[#1a1a1a] text-gray-600"
-          }`}
+          className={`px-1 min-w-[24px] h-5 rounded text-[9px] font-mono flex items-center justify-center transition-colors duration-75 ${pressed
+            ? "bg-green-500 text-black font-bold"
+            : "bg-[#1a1a1a] text-gray-600"
+            }`}
         >
           {BUTTON_LABELS[i] ?? i}
         </div>
@@ -87,9 +86,8 @@ function PovIndicator({ value }: { value: number }) {
             style={{
               top: "50%",
               left: "50%",
-              transform: `translate(-50%, -50%) translate(${
-                Math.sin((angleDeg * Math.PI) / 180) * 8
-              }px, ${-Math.cos((angleDeg * Math.PI) / 180) * 8}px)`,
+              transform: `translate(-50%, -50%) translate(${Math.sin((angleDeg * Math.PI) / 180) * 8
+                }px, ${-Math.cos((angleDeg * Math.PI) / 180) * 8}px)`,
             }}
           />
         )}
@@ -146,6 +144,8 @@ export default function USBDevicesTab({ state }: Props) {
 
   const selectedJs = state.joysticks.find((j) => j.slot === selectedSlot);
 
+
+
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
@@ -176,15 +176,14 @@ export default function USBDevicesTab({ state }: Props) {
                     : cmd.lockJoystick(js.uuid, slot);
                 }
               }}
-              className={`flex items-center gap-2 px-2 py-1.5 rounded text-xs text-left transition-colors ${
-                isSelected
-                  ? "bg-blue-600/20 border border-blue-500/50"
-                  : js?.connected
+              className={`flex items-center gap-2 px-2 py-1.5 rounded text-xs text-left transition-colors ${isSelected
+                ? "bg-blue-600/20 border border-blue-500/50"
+                : js?.connected
                   ? "bg-[#2a2a2a] text-gray-200 border border-transparent"
                   : js
-                  ? "bg-[#222] text-gray-600 border border-transparent"
-                  : "bg-[#1a1a1a] text-gray-700 border border-transparent"
-              }`}
+                    ? "bg-[#222] text-gray-600 border border-transparent"
+                    : "bg-[#1a1a1a] text-gray-700 border border-transparent"
+                }`}
             >
               <span className="font-mono text-gray-500 w-4">{slot}</span>
               <span
