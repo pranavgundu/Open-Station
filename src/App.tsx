@@ -33,10 +33,8 @@ export default function App() {
 
   return (
     <div className="h-screen flex bg-[#1e1e1e] text-white text-sm select-none overflow-hidden">
-      {/* Left Tab Bar */}
       <TabBar tabs={LEFT_TABS} active={leftTab} onSelect={setLeftTab} position="left" />
 
-      {/* Left Panel */}
       <div className="w-56 border-r border-gray-700 overflow-y-auto p-3">
         <div className="text-gray-500 text-xs uppercase tracking-wider">
           {LEFT_TABS.find((t) => t.id === leftTab)?.label || ""}
@@ -48,19 +46,16 @@ export default function App() {
         {leftTab === "canpower" && <CANPowerTab state={state} />}
       </div>
 
-      {/* Center Status Pane */}
       <div className="flex-1 flex items-center justify-center">
         <StatusPane state={state} />
       </div>
 
-      {/* Right Panel */}
       <div className="w-72 border-l border-gray-700 overflow-y-auto p-3">
         {rightTab === "messages" && <MessagesTab />}
         {rightTab === "charts" && <ChartsTab state={state} />}
         {rightTab === "both" && <BothTab state={state} />}
       </div>
 
-      {/* Right Tab Bar */}
       <TabBar tabs={RIGHT_TABS} active={rightTab} onSelect={setRightTab} position="right" />
     </div>
   );

@@ -4,7 +4,6 @@ use crate::packet::tcp;
 use crate::types::*;
 use tokio::sync::{mpsc, watch};
 
-/// Internal channels needed to run the driver station
 struct DsChannels {
     control_rx: mpsc::UnboundedReceiver<(ControlFlags, RequestFlags, Vec<JoystickData>, Alliance)>,
     tcp_outbound_rx: mpsc::UnboundedReceiver<Vec<u8>>,
@@ -17,7 +16,6 @@ struct DsChannels {
     messages_tx: mpsc::UnboundedSender<TcpMessage>,
 }
 
-/// The main driver station protocol handler
 pub struct DriverStation {
     team: u32,
     alliance: Alliance,
@@ -28,43 +26,28 @@ pub struct DriverStation {
     use_usb: bool,
     estopped: bool,
 
-    // Channel to send control updates to ConnectionManager
     control_tx: mpsc::UnboundedSender<(ControlFlags, RequestFlags, Vec<JoystickData>, Alliance)>,
-    // Channel to send outbound TCP frames
     tcp_outbound_tx: mpsc::UnboundedSender<Vec<u8>>,
 
-    // Internal channels - taken by run()
     channels: Option<DsChannels>,
 }
 
-/// Receiver handle for consuming DS events — given to the application layer
 pub struct DsReceiver {
-    /// Watch channel for robot state updates
     pub state: watch::Receiver<RobotState>,
-    /// Stdout lines from robot
     pub stdout: mpsc::UnboundedReceiver<String>,
-    /// TCP messages (errors, version info, etc.)
     pub messages: mpsc::UnboundedReceiver<TcpMessage>,
 }
 
 impl DriverStation {
-    /// Create a new DriverStation. Returns the DS instance and a receiver for events.
-    /// Does NOT start communication — call `run()` to start.
     pub fn new(team: u32, alliance: Alliance) -> (Self, DsReceiver) {
-        // Create all channels:
-        // - control_tx/rx for sending control state to ConnectionManager
         let (control_tx, control_rx) = mpsc::unbounded_channel();
 
-        // - tcp_outbound_tx/rx for sending TCP frames
         let (tcp_outbound_tx, tcp_outbound_rx) = mpsc::unbounded_channel();
 
-        // - packet_tx/rx for receiving parsed UDP packets from ConnectionManager
         let (packet_tx, packet_rx) = mpsc::unbounded_channel();
 
-        // - tcp_message_tx/rx for receiving parsed TCP messages
         let (tcp_message_tx, tcp_message_rx) = mpsc::unbounded_channel();
 
-        // - state watch channel for RobotState
         let initial_state = RobotState {
             connected: false,
             code_running: false,
@@ -83,10 +66,8 @@ impl DriverStation {
         };
         let (state_tx, state_rx) = watch::channel(initial_state);
 
-        // - stdout mpsc for stdout lines
         let (stdout_tx, stdout_rx) = mpsc::unbounded_channel();
 
-        // - messages mpsc for other TCP messages
         let (messages_tx, messages_rx) = mpsc::unbounded_channel();
 
         let channels = DsChannels {
@@ -124,12 +105,9 @@ impl DriverStation {
         (ds, receiver)
     }
 
-    /// Start the protocol communication. This spawns background tasks and runs forever.
-    /// Call this once, it will manage connection/reconnection internally.
     pub async fn run(&mut self) {
         let mut channels = self.channels.take().expect("run() called more than once");
 
-        // Send initial control state
         let _ = self.control_tx.send((
             self.control,
             self.request,
@@ -137,11 +115,9 @@ impl DriverStation {
             self.alliance,
         ));
 
-        // 1. Create ConnectionManager
         let mut conn_mgr = ConnectionManager::new(self.team);
         conn_mgr.set_usb_mode(self.use_usb);
 
-        // 2. Spawn ConnectionManager::run()
         tokio::spawn(async move {
             conn_mgr
                 .run(
@@ -153,9 +129,6 @@ impl DriverStation {
                 .await;
         });
 
-        // 3. Spawn a task that reads from packet_rx (RioPackets from UDP):
-        //    - Update RobotState from each packet
-        //    - Send updated state via watch channel
         let state_tx = channels.state_tx.clone();
         tokio::spawn(async move {
             let mut current_state = RobotState {
@@ -181,9 +154,6 @@ impl DriverStation {
             }
         });
 
-        // 4. Spawn a task that reads from tcp_message_rx:
-        //    - For Stdout messages: forward to stdout channel
-        //    - For other messages: forward to messages channel
         let stdout_tx = channels.stdout_tx.clone();
         let messages_tx = channels.messages_tx.clone();
         tokio::spawn(async move {
@@ -199,7 +169,6 @@ impl DriverStation {
             }
         });
 
-        // Main loop - keep running forever
         loop {
             tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
         }
@@ -231,8 +200,6 @@ impl DriverStation {
 
     pub fn set_team(&mut self, team: u32) {
         self.team = team;
-        // Note: ConnectionManager will need to be notified (can send via a separate channel
-        // or handle in run loop)
     }
 
     pub fn set_alliance(&mut self, alliance: Alliance) {
@@ -259,7 +226,6 @@ impl DriverStation {
     pub fn reboot_roborio(&mut self) {
         self.request.reboot_roborio = true;
         self.send_control();
-        // Clear the flag after one send (it's a one-shot request)
         self.request.reboot_roborio = false;
     }
 
@@ -279,7 +245,6 @@ impl DriverStation {
         self.send_control();
     }
 
-    /// Send current control state to ConnectionManager
     fn send_control(&self) {
         let _ = self.control_tx.send((
             self.control,
@@ -290,7 +255,6 @@ impl DriverStation {
     }
 }
 
-/// Update robot state from a received RioPacket
 fn update_robot_state(state: &mut RobotState, packet: &RioPacket, conn_state: ConnectionState) {
     state.connected = conn_state != ConnectionState::Disconnected;
     state.code_running = !packet.status.code_initializing;
@@ -298,7 +262,6 @@ fn update_robot_state(state: &mut RobotState, packet: &RioPacket, conn_state: Co
     state.status = packet.status;
     state.sequence = packet.sequence;
 
-    // Process tags for telemetry
     for tag in &packet.tags {
         match tag {
             crate::packet::incoming::RioTag::CanMetrics(can) => state.telemetry.can = *can,
@@ -335,7 +298,6 @@ mod tests {
         ds.estop();
         assert!(ds.is_estopped());
         assert!(!ds.control.enabled);
-        // Trying to enable after estop should not work
         ds.enable();
         assert!(!ds.control.enabled);
     }

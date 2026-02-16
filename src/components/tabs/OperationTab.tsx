@@ -13,7 +13,6 @@ export default function OperationTab({ state }: Props) {
   const enabledRef = useRef(state.enabled);
   const timerRef = useRef<ReturnType<typeof setInterval>>(undefined);
 
-  // Sync selectedMode with backend when backend state changes
   useEffect(() => {
     setSelectedMode(state.mode);
   }, [state.mode]);
@@ -68,7 +67,6 @@ export default function OperationTab({ state }: Props) {
         </button>
       </div>
 
-      {/* Enable/Disable */}
       <div className="flex gap-2 mt-2">
         <button
           onClick={() => cmd.enable()}
@@ -85,12 +83,10 @@ export default function OperationTab({ state }: Props) {
         </button>
       </div>
 
-      {/* Elapsed time */}
       <div className="text-center text-xs text-gray-400">
         Elapsed: <span className="font-mono">{formatTime(elapsedMs)}</span>
       </div>
 
-      {/* Alliance */}
       <div className="text-xs text-gray-500 uppercase tracking-wider mt-2">Alliance Station</div>
       <select
         value={`${state.alliance_color}${state.alliance_station}`}

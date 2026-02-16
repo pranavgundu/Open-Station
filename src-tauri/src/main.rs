@@ -22,7 +22,6 @@ fn main() {
         .setup(move |app| {
             let handle = app.handle().clone();
 
-            // Spawn event emitters
             events::spawn_state_emitter(handle.clone(), state_rx);
             if let Some(rx) = stdout_rx {
                 events::spawn_stdout_emitter(handle.clone(), rx);
@@ -31,7 +30,6 @@ fn main() {
                 events::spawn_message_emitter(handle.clone(), rx);
             }
 
-            // Spawn run loop
             let run_handle = handle.clone();
             tauri::async_runtime::spawn(async move {
                 let mut interval = tokio::time::interval(std::time::Duration::from_millis(20));

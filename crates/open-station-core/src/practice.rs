@@ -12,23 +12,22 @@ pub enum PracticePhase {
     Done,
 }
 
-/// What the practice mode wants the DS to do this tick
 #[derive(Debug, Clone)]
 pub struct PracticeTick {
     pub phase: PracticePhase,
-    pub elapsed: Duration,    // time in current phase
-    pub remaining: Duration,  // time left in current phase
-    pub should_enable: bool,  // true on transition INTO auto or teleop
-    pub should_disable: bool, // true on transition OUT of auto/teleop
-    pub mode: Option<Mode>,   // what mode to set (Some only on transitions)
+    pub elapsed: Duration,
+    pub remaining: Duration,
+    pub should_enable: bool,
+    pub should_disable: bool,
+    pub mode: Option<Mode>,
 }
 
 pub struct PracticeMode {
     phase: PracticePhase,
     timing: PracticeTiming,
     phase_start: Option<Instant>,
-    a_stopped: bool,           // A-Stop active during auto
-    prev_phase: PracticePhase, // for detecting transitions
+    a_stopped: bool,
+    prev_phase: PracticePhase,
 }
 
 impl PracticeMode {
@@ -55,14 +54,12 @@ impl PracticeMode {
         self.a_stopped = false;
     }
 
-    /// A-Stop: disable during auto, auto-re-enable at teleop start
     pub fn a_stop(&mut self) {
         if self.phase == PracticePhase::Autonomous {
             self.a_stopped = true;
         }
     }
 
-    /// Call every ~20ms. Returns what the DS should do.
     pub fn tick(&mut self) -> PracticeTick {
         let now = Instant::now();
         let elapsed = self
@@ -111,7 +108,6 @@ impl PracticeMode {
             None
         };
 
-        // Handle A-Stop: if a_stopped and we just transitioned to teleop, enable
         let should_enable =
             if self.phase == PracticePhase::Teleop && transitioning && self.a_stopped {
                 self.a_stopped = false;
@@ -120,7 +116,6 @@ impl PracticeMode {
                 should_enable
             };
 
-        // A-Stop should disable during auto
         let should_disable = if self.a_stopped && self.phase == PracticePhase::Autonomous {
             true
         } else {

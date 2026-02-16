@@ -2,11 +2,9 @@ use open_station_core::state::UiState;
 use tauri::{AppHandle, Emitter};
 use tokio::sync::watch;
 
-/// Spawn a background task that emits "robot-state" events whenever state changes
 #[allow(dead_code)]
 pub fn spawn_state_emitter(app: AppHandle, mut rx: watch::Receiver<UiState>) {
     tauri::async_runtime::spawn(async move {
-        // Emit initial state
         let _ = app.emit("robot-state", &*rx.borrow());
 
         loop {
@@ -18,7 +16,6 @@ pub fn spawn_state_emitter(app: AppHandle, mut rx: watch::Receiver<UiState>) {
     });
 }
 
-/// Spawn a background task that emits "stdout-message" events
 #[allow(dead_code)]
 pub fn spawn_stdout_emitter(app: AppHandle, mut rx: tokio::sync::mpsc::UnboundedReceiver<String>) {
     tauri::async_runtime::spawn(async move {
@@ -28,7 +25,6 @@ pub fn spawn_stdout_emitter(app: AppHandle, mut rx: tokio::sync::mpsc::Unbounded
     });
 }
 
-/// Spawn a background task that emits "tcp-message" events
 #[allow(dead_code)]
 pub fn spawn_message_emitter(
     app: AppHandle,
@@ -36,7 +32,6 @@ pub fn spawn_message_emitter(
 ) {
     tauri::async_runtime::spawn(async move {
         while let Some(msg) = rx.recv().await {
-            // Serialize the message appropriately
             let payload = match &msg {
                 open_station_protocol::types::TcpMessage::Message(s) => {
                     serde_json::json!({"type": "message", "text": s})

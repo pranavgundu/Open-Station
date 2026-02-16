@@ -10,7 +10,6 @@ const AXIS_LABELS = ["LS X", "LS Y", "LT", "RT", "RS X", "RS Y"];
 const BUTTON_LABELS = ["A", "B", "X", "Y", "LB", "RB", "Back", "Start", "LS", "RS"];
 
 function AxisBar({ label, value }: { label: string; value: number }) {
-  // value is -128..127, normalize to -1..1
   const norm = value / 127;
   const pct = Math.abs(norm) * 50;
   const isNeg = norm < 0;
@@ -19,9 +18,7 @@ function AxisBar({ label, value }: { label: string; value: number }) {
     <div className="flex items-center gap-1.5 h-4">
       <span className="text-[9px] text-gray-500 w-7 text-right font-mono">{label}</span>
       <div className="flex-1 h-2.5 bg-[#1a1a1a] rounded-sm relative overflow-hidden">
-        {/* Center line */}
         <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gray-700" />
-        {/* Value bar */}
         <div
           className="absolute top-0 bottom-0 bg-green-500 rounded-sm transition-all duration-75"
           style={{
@@ -54,7 +51,6 @@ function ButtonGrid({ buttons }: { buttons: boolean[] }) {
 }
 
 function PovIndicator({ value }: { value: number }) {
-  // value: -1 = unpressed, 0=N, 45=NE, 90=E, etc.
   const active = value >= 0;
   const angleDeg = active ? value : 0;
 
@@ -62,7 +58,6 @@ function PovIndicator({ value }: { value: number }) {
     <div className="flex items-center gap-1.5">
       <span className="text-[9px] text-gray-500 font-mono">POV</span>
       <div className="w-7 h-7 rounded-full bg-[#1a1a1a] relative border border-gray-700">
-        {/* Cardinal markers */}
         {[0, 90, 180, 270].map((deg) => (
           <div
             key={deg}
@@ -79,7 +74,6 @@ function PovIndicator({ value }: { value: number }) {
             }}
           />
         ))}
-        {/* Direction indicator */}
         {active && (
           <div
             className="absolute w-1.5 h-1.5 bg-green-500 rounded-full"
@@ -111,7 +105,6 @@ function JoystickDetail({ js }: { js: JoystickInfo }) {
         {js.name} {js.locked && <span className="text-gray-600">(locked)</span>}
       </div>
 
-      {/* Axes */}
       <div className="flex flex-col gap-0.5">
         <div className="text-[9px] text-gray-600 uppercase">Axes</div>
         {axes.map((v, i) => (
@@ -119,13 +112,11 @@ function JoystickDetail({ js }: { js: JoystickInfo }) {
         ))}
       </div>
 
-      {/* Buttons */}
       <div className="flex flex-col gap-1">
         <div className="text-[9px] text-gray-600 uppercase">Buttons</div>
         <ButtonGrid buttons={buttons} />
       </div>
 
-      {/* POV */}
       <div className="flex flex-col gap-1">
         <div className="text-[9px] text-gray-600 uppercase">POV</div>
         <div className="flex gap-2">
@@ -158,7 +149,6 @@ export default function USBDevicesTab({ state }: Props) {
         </button>
       </div>
 
-      {/* Slot list */}
       <div className="flex flex-col gap-1">
         {[0, 1, 2, 3, 4, 5].map((slot) => {
           const js = state.joysticks.find((j) => j.slot === slot);
@@ -197,7 +187,6 @@ export default function USBDevicesTab({ state }: Props) {
         })}
       </div>
 
-      {/* Live joystick visualization */}
       {selectedJs?.connected ? (
         <JoystickDetail js={selectedJs} />
       ) : (

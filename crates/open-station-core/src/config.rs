@@ -69,23 +69,16 @@ impl Default for WindowConfig {
 }
 
 impl Config {
-    /// Get the platform-specific config directory
     pub fn config_dir() -> PathBuf {
-        // Use dirs::config_dir() to get:
-        // Linux: ~/.config/open-station/
-        // macOS: ~/Library/Application Support/open-station/
-        // Windows: %APPDATA%/open-station/
         let mut dir = dirs::config_dir().unwrap_or_else(|| PathBuf::from("."));
         dir.push("open-station");
         dir
     }
 
-    /// Get the config file path
     pub fn config_path() -> PathBuf {
         Self::config_dir().join("config.toml")
     }
 
-    /// Load config from disk, return default if file doesn't exist or is invalid
     pub fn load() -> Self {
         let path = Self::config_path();
         match fs::read_to_string(&path) {
@@ -94,7 +87,6 @@ impl Config {
         }
     }
 
-    /// Save config to disk. Creates directory if needed.
     pub fn save(&self) -> Result<(), std::io::Error> {
         let dir = Self::config_dir();
         fs::create_dir_all(&dir)?;
@@ -102,7 +94,6 @@ impl Config {
         fs::write(Self::config_path(), contents)
     }
 
-    /// Load from a specific path (for testing)
     pub fn load_from(path: &std::path::Path) -> Self {
         match fs::read_to_string(path) {
             Ok(contents) => toml::from_str(&contents).unwrap_or_default(),
@@ -110,7 +101,6 @@ impl Config {
         }
     }
 
-    /// Save to a specific path (for testing)
     pub fn save_to(&self, path: &std::path::Path) -> Result<(), std::io::Error> {
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent)?;

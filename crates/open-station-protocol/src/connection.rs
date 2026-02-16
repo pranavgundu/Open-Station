@@ -21,11 +21,10 @@ pub struct ConnectionManager {
     use_usb: bool,
     state: ConnectionState,
     target_addr: Option<SocketAddr>,
-    #[allow(dead_code)]
     sequence: u16,
     #[allow(dead_code)]
     last_received: Option<Instant>,
-    trip_times: Vec<f64>, // rolling window for avg trip time
+    trip_times: Vec<f64>,
     lost_packets: u32,
     #[allow(dead_code)]
     sent_count: u32,
@@ -77,14 +76,12 @@ impl ConnectionManager {
         self.lost_packets
     }
 
-    /// Convert team number to static IP: 10.TE.AM.2
     pub fn team_to_ip(team: u32) -> IpAddr {
         let te = (team / 100) as u8;
         let am = (team % 100) as u8;
         IpAddr::V4(Ipv4Addr::new(10, te, am, 2))
     }
 
-    /// Resolve the roboRIO address. Returns the socket address to connect to.
     pub async fn resolve_address(&mut self) -> SocketAddr {
         self.state = ConnectionState::Resolving;
 
@@ -148,12 +145,6 @@ impl ConnectionManager {
         mdns_result.ok().flatten()
     }
 
-    /// The main connection loop. Call this to start communication.
-    ///
-    /// - `control_rx`: receives (ControlFlags, RequestFlags, Vec<JoystickData>, Alliance) from the DriverStation
-    /// - `packet_tx`: sends parsed RioPackets to the DriverStation
-    /// - `tcp_message_tx`: sends parsed TCP messages
-    /// - `tcp_outbound_rx`: receives outbound TCP frames to send
     pub async fn run(
         &mut self,
         mut control_rx: mpsc::UnboundedReceiver<(
@@ -298,7 +289,6 @@ impl ConnectionManager {
                         }
                     }
 
-                    // TCP read
                     result = async {
                         if let Some(stream) = tcp_stream.as_mut() {
                             stream.read(&mut tcp_read_buf).await
@@ -330,7 +320,6 @@ impl ConnectionManager {
                         }
                     }
 
-                    // TCP write
                     Some(frame) = tcp_outbound_rx.recv() => {
                         if let Some(stream) = tcp_stream.as_mut() {
                             if let Err(e) = stream.write_all(&frame).await {
@@ -395,14 +384,13 @@ mod tests {
 
     #[test]
     fn test_backoff_capping() {
-        // Test that backoff calculation caps at 2 seconds
         let backoff = |attempt: u32| -> u64 { std::cmp::min(100 * 2u64.pow(attempt), 2000) };
         assert_eq!(backoff(0), 100);
         assert_eq!(backoff(1), 200);
         assert_eq!(backoff(2), 400);
         assert_eq!(backoff(3), 800);
         assert_eq!(backoff(4), 1600);
-        assert_eq!(backoff(5), 2000); // capped
-        assert_eq!(backoff(10), 2000); // still capped
+        assert_eq!(backoff(5), 2000);
+        assert_eq!(backoff(10), 2000);
     }
 }

@@ -31,7 +31,6 @@ impl HotkeyManager {
         }
     }
 
-    /// Start listening for global hotkeys on a background thread
     pub fn start(&mut self) {
         if self.running.load(Ordering::SeqCst) {
             return;
@@ -80,7 +79,6 @@ impl HotkeyManager {
                 }
             };
 
-            // rdev::listen blocks the thread
             if let Err(e) = rdev::listen(callback) {
                 log::error!("Global hotkey listener error: {:?}", e);
             }
@@ -88,17 +86,14 @@ impl HotkeyManager {
         });
     }
 
-    /// Get the next hotkey action (non-blocking)
     pub async fn next_action(&mut self) -> Option<HotkeyAction> {
         self.rx.recv().await
     }
 
-    /// Try to get a hotkey action without waiting
     pub fn try_next_action(&mut self) -> Option<HotkeyAction> {
         self.rx.try_recv().ok()
     }
 
-    /// Stop the hotkey listener
     pub fn stop(&mut self) {
         self.running.store(false, Ordering::SeqCst);
     }

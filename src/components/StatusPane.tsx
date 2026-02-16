@@ -43,25 +43,21 @@ export default function StatusPane({ state }: Props) {
 
   return (
     <div className="flex flex-col items-center gap-4 px-8 py-4">
-      {/* Team Number */}
       <div className="text-3xl font-mono font-bold text-gray-200">
         {state.team_number || "----"}
       </div>
 
-      {/* Battery Voltage */}
       <div className={`text-4xl font-mono font-bold ${vColor} px-4 py-1 rounded`}>
         {state.voltage > 0 ? state.voltage.toFixed(2) : "--.--."}
         <span className="text-lg ml-1">V</span>
       </div>
 
-      {/* Status Indicators */}
       <div className="flex gap-6">
         <StatusIndicator label="Comms" active={state.connected} />
         <StatusIndicator label="Code" active={state.code_running} />
         <StatusIndicator label="Joysticks" active={state.any_joystick_connected} />
       </div>
 
-      {/* Status String */}
       <div
         className={`text-sm font-semibold px-3 py-1 rounded ${
           state.estopped

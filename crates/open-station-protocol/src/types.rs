@@ -1,10 +1,5 @@
 use std::fmt;
 
-// ---------------------------------------------------------------------------
-// 1. Mode
-// ---------------------------------------------------------------------------
-
-/// The three operating modes of an FRC robot.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum Mode {
     #[default]
@@ -14,7 +9,6 @@ pub enum Mode {
 }
 
 impl Mode {
-    /// Encode the mode into a 2-bit value (bits 0-1).
     pub fn to_bits(self) -> u8 {
         match self {
             Mode::Teleop => 0b00,
@@ -23,7 +17,6 @@ impl Mode {
         }
     }
 
-    /// Decode a 2-bit value into a `Mode`, returning `None` for invalid values.
     pub fn from_bits(bits: u8) -> Option<Mode> {
         match bits & 0b11 {
             0b00 => Some(Mode::Teleop),
@@ -44,22 +37,12 @@ impl fmt::Display for Mode {
     }
 }
 
-// ---------------------------------------------------------------------------
-// 2. AllianceColor
-// ---------------------------------------------------------------------------
-
-/// Red or Blue alliance.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AllianceColor {
     Red,
     Blue,
 }
 
-// ---------------------------------------------------------------------------
-// 3. Alliance
-// ---------------------------------------------------------------------------
-
-/// An alliance position: color + station number (1-3).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Alliance {
     pub color: AllianceColor,
@@ -67,7 +50,6 @@ pub struct Alliance {
 }
 
 impl Alliance {
-    /// Create a new `Alliance`. Panics if `station` is not 1, 2, or 3.
     pub fn new(color: AllianceColor, station: u8) -> Self {
         assert!(
             (1..=3).contains(&station),
@@ -76,7 +58,6 @@ impl Alliance {
         Alliance { color, station }
     }
 
-    /// Encode as a single byte: Red1=0, Red2=1, Red3=2, Blue1=3, Blue2=4, Blue3=5.
     pub fn to_byte(self) -> u8 {
         let base = match self.color {
             AllianceColor::Red => 0,
@@ -85,7 +66,6 @@ impl Alliance {
         base + (self.station - 1)
     }
 
-    /// Decode from a byte. Returns `None` for values >= 6.
     pub fn from_byte(byte: u8) -> Option<Alliance> {
         match byte {
             0 => Some(Alliance::new(AllianceColor::Red, 1)),
@@ -99,27 +79,15 @@ impl Alliance {
     }
 }
 
-// ---------------------------------------------------------------------------
-// 4. ControlFlags
-// ---------------------------------------------------------------------------
-
-/// Flags sent from the Driver Station to the robot in each control packet.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct ControlFlags {
-    /// Emergency stop — bit 7.
     pub estop: bool,
-    /// FMS is connected — bit 3.
     pub fms_connected: bool,
-    /// Robot is enabled — bit 2.
     pub enabled: bool,
-    /// Current operating mode — bits 0-1.
     pub mode: Mode,
 }
 
 impl ControlFlags {
-    /// Encode to a single byte.
-    ///
-    /// Layout: `[estop:1][0:3][fms:1][enabled:1][mode:2]`
     pub fn to_byte(self) -> u8 {
         let mut byte = 0u8;
         if self.estop {
@@ -135,7 +103,6 @@ impl ControlFlags {
         byte
     }
 
-    /// Decode from a single byte.
     pub fn from_byte(byte: u8) -> ControlFlags {
         ControlFlags {
             estop: (byte >> 7) & 1 != 0,
@@ -146,21 +113,13 @@ impl ControlFlags {
     }
 }
 
-// ---------------------------------------------------------------------------
-// 5. RequestFlags
-// ---------------------------------------------------------------------------
-
-/// Request flags sent from the Driver Station to the robot.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct RequestFlags {
-    /// Request a RoboRIO reboot — bit 3.
     pub reboot_roborio: bool,
-    /// Request a robot code restart — bit 2.
     pub restart_code: bool,
 }
 
 impl RequestFlags {
-    /// Encode to a single byte.
     pub fn to_byte(self) -> u8 {
         let mut byte = 0u8;
         if self.reboot_roborio {
@@ -173,27 +132,16 @@ impl RequestFlags {
     }
 }
 
-// ---------------------------------------------------------------------------
-// 6. StatusFlags
-// ---------------------------------------------------------------------------
-
-/// Status flags received from the robot.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct StatusFlags {
-    /// Emergency stop active — bit 7.
     pub estop: bool,
-    /// Robot code is still initializing — bit 4.
     pub code_initializing: bool,
-    /// Brownout detected — bit 3.
     pub brownout: bool,
-    /// Robot is enabled — bit 2.
     pub enabled: bool,
-    /// Current operating mode — bits 0-1.
     pub mode: Mode,
 }
 
 impl StatusFlags {
-    /// Decode from a single byte.
     pub fn from_byte(byte: u8) -> StatusFlags {
         StatusFlags {
             estop: (byte >> 7) & 1 != 0,
@@ -205,26 +153,18 @@ impl StatusFlags {
     }
 }
 
-// ---------------------------------------------------------------------------
-// 7. BatteryVoltage
-// ---------------------------------------------------------------------------
-
-/// Robot battery voltage represented as a high byte (integer volts) and a low
-/// byte (fractional volts as value/256).
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct BatteryVoltage {
     pub volts: f32,
 }
 
 impl BatteryVoltage {
-    /// Decode from the two-byte wire format.
     pub fn from_bytes(high: u8, low: u8) -> BatteryVoltage {
         BatteryVoltage {
             volts: high as f32 + low as f32 / 256.0,
         }
     }
 
-    /// Encode to the two-byte wire format.
     pub fn to_bytes(self) -> (u8, u8) {
         let high = self.volts.floor() as u8;
         let frac = (self.volts - high as f32) * 256.0;
@@ -232,37 +172,19 @@ impl BatteryVoltage {
     }
 }
 
-// ---------------------------------------------------------------------------
-// 8. JoystickData
-// ---------------------------------------------------------------------------
-
-/// Joystick input state for a single controller.
 #[derive(Debug, Clone, Default)]
 pub struct JoystickData {
-    /// Axis values (–128..127).
     pub axes: Vec<i8>,
-    /// Button pressed states.
     pub buttons: Vec<bool>,
-    /// POV hat switch values (–1 when centered).
     pub povs: Vec<i16>,
 }
 
-// ---------------------------------------------------------------------------
-// 9. RumbleOutput
-// ---------------------------------------------------------------------------
-
-/// Haptic rumble output for a controller (values clamped 0.0-1.0).
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct RumbleOutput {
     pub left: f32,
     pub right: f32,
 }
 
-// ---------------------------------------------------------------------------
-// 10. CanMetrics
-// ---------------------------------------------------------------------------
-
-/// CAN bus health metrics reported by the robot.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct CanMetrics {
     pub utilization: f32,
@@ -284,11 +206,6 @@ impl Default for CanMetrics {
     }
 }
 
-// ---------------------------------------------------------------------------
-// 11. TelemetryData
-// ---------------------------------------------------------------------------
-
-/// Aggregate telemetry payload received from the robot.
 #[derive(Debug, Clone, Default)]
 pub struct TelemetryData {
     pub can: CanMetrics,
@@ -298,11 +215,6 @@ pub struct TelemetryData {
     pub disk_free: u32,
 }
 
-// ---------------------------------------------------------------------------
-// 12. RobotState
-// ---------------------------------------------------------------------------
-
-/// Complete snapshot of the robot's state as seen by the Driver Station.
 #[derive(Debug, Clone)]
 pub struct RobotState {
     pub connected: bool,
@@ -315,16 +227,9 @@ pub struct RobotState {
     pub lost_packets: u32,
 }
 
-// ---------------------------------------------------------------------------
-// 13. TcpMessage
-// ---------------------------------------------------------------------------
-
-/// Messages received from the robot over the TCP channel.
 #[derive(Debug, Clone)]
 pub enum TcpMessage {
-    /// Standard output text from robot code.
     Stdout(String),
-    /// An error or warning report.
     ErrorReport {
         timestamp: f64,
         sequence: u16,
@@ -334,20 +239,14 @@ pub enum TcpMessage {
         location: String,
         call_stack: String,
     },
-    /// Device version information.
     VersionInfo {
         device_type: u8,
         device_id: u8,
         name: String,
         version: String,
     },
-    /// Generic message.
     Message(String),
 }
-
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
 
 #[cfg(test)]
 mod tests {
@@ -394,8 +293,6 @@ mod tests {
             mode: Mode::Autonomous,
         };
 
-        // bit 7 = estop (1), bit 3 = fms (0), bit 2 = enabled (1), bits 0-1 = autonomous (10)
-        // 1000_0110 = 0x86 = 134
         let byte = flags.to_byte();
         assert_eq!(byte, 0b1000_0110);
 
@@ -418,7 +315,6 @@ mod tests {
 
     #[test]
     fn test_status_flags_brownout() {
-        // 0b0000_1000 => brownout=true, everything else false/Teleop
         let flags = StatusFlags::from_byte(0b0000_1000);
         assert!(!flags.estop);
         assert!(!flags.code_initializing);
@@ -433,7 +329,6 @@ mod tests {
             reboot_roborio: true,
             restart_code: true,
         };
-        // bit 3 = reboot (1), bit 2 = restart (1) => 0b0000_1100 = 12
         assert_eq!(flags.to_byte(), 0b0000_1100);
     }
 

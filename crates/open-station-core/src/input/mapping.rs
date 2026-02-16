@@ -1,8 +1,5 @@
 use gilrs::{Axis, Button, Gamepad};
 
-/// Map a gilrs axis to FRC axis index (0-5)
-/// LeftStickX → 0, LeftStickY → 1, LeftZ (left trigger) → 2,
-/// RightZ (right trigger) → 3, RightStickX → 4, RightStickY → 5
 pub fn map_axis(axis: Axis) -> Option<usize> {
     match axis {
         Axis::LeftStickX => Some(0),
@@ -15,10 +12,6 @@ pub fn map_axis(axis: Axis) -> Option<usize> {
     }
 }
 
-/// Map a gilrs button to FRC button index (0-based, FRC is 1-based so add 1 for display)
-/// South(A)→0, East(B)→1, North(Y)→2, West(X)→3,
-/// LeftTrigger(LB)→4, RightTrigger(RB)→5,
-/// Select→6, Start→7, LeftThumb(LS)→8, RightThumb(RS)→9
 pub fn map_button(button: Button) -> Option<usize> {
     match button {
         Button::South => Some(0),
@@ -35,9 +28,6 @@ pub fn map_button(button: Button) -> Option<usize> {
     }
 }
 
-/// Read D-pad state from gamepad and return POV angle
-/// Up=0, Right=90, Down=180, Left=270, not pressed=-1
-/// Also handles diagonals: UpRight=45, DownRight=135, DownLeft=225, UpLeft=315
 pub fn read_dpad_pov(gamepad: &Gamepad) -> i16 {
     let up = gamepad.is_pressed(Button::DPadUp);
     let down = gamepad.is_pressed(Button::DPadDown);
@@ -84,7 +74,4 @@ mod tests {
         assert_eq!(map_button(Button::LeftThumb), Some(8));
         assert_eq!(map_button(Button::RightThumb), Some(9));
     }
-
-    // Note: D-pad tests need a Gamepad instance which requires hardware.
-    // The mapping logic is simple enough to verify by inspection.
 }

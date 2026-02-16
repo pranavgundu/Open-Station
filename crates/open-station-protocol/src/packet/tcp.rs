@@ -1,6 +1,5 @@
 use crate::types::TcpMessage;
 
-/// Accumulates bytes from a TCP stream and yields complete frames
 pub struct TcpFrameReader {
     buffer: Vec<u8>,
 }
@@ -10,37 +9,28 @@ impl TcpFrameReader {
         TcpFrameReader { buffer: Vec::new() }
     }
 
-    /// Feed bytes from the TCP stream
     pub fn feed(&mut self, data: &[u8]) {
         self.buffer.extend_from_slice(data);
     }
 
-    /// Try to extract the next complete frame. Returns None if not enough data yet.
     pub fn next_frame(&mut self) -> Option<(u8, Vec<u8>)> {
-        // Need at least 3 bytes: 2 for size + 1 for tag
         if self.buffer.len() < 3 {
             return None;
         }
 
-        // Read size as u16 big-endian
         let size_hi = self.buffer[0];
         let size_lo = self.buffer[1];
         let size = u16::from_be_bytes([size_hi, size_lo]) as usize;
 
-        // Check if we have the complete frame
-        // Size includes tag + payload, but NOT the size bytes themselves
         if self.buffer.len() < 2 + size {
             return None;
         }
 
-        // Extract tag
         let tag = self.buffer[2];
 
-        // Extract payload (everything after tag)
-        let payload_len = size - 1; // size includes tag, so payload is size - 1
+        let payload_len = size - 1;
         let payload = self.buffer[3..3 + payload_len].to_vec();
 
-        // Remove the consumed frame from the buffer
         self.buffer.drain(0..2 + size);
 
         Some((tag, payload))
@@ -53,16 +43,13 @@ impl Default for TcpFrameReader {
     }
 }
 
-/// Parse a TCP frame's tag + payload into a TcpMessage
 pub fn parse_tcp_message(tag: u8, payload: &[u8]) -> Option<TcpMessage> {
     match tag {
         0x00 => {
-            // Message - payload is UTF-8 string
             let message = String::from_utf8(payload.to_vec()).ok()?;
             Some(TcpMessage::Message(message))
         }
         0x0a => {
-            // Version Info
             if payload.len() < 4 {
                 return None;
             }
@@ -94,7 +81,6 @@ pub fn parse_tcp_message(tag: u8, payload: &[u8]) -> Option<TcpMessage> {
             })
         }
         0x0b => {
-            // Error Report
             if payload.len() < 8 + 2 + 4 + 2 + 2 {
                 return None;
             }
@@ -157,7 +143,6 @@ pub fn parse_tcp_message(tag: u8, payload: &[u8]) -> Option<TcpMessage> {
             })
         }
         0x0c => {
-            // Stdout - payload is UTF-8 string
             let stdout = String::from_utf8(payload.to_vec()).ok()?;
             Some(TcpMessage::Stdout(stdout))
         }
@@ -165,9 +150,7 @@ pub fn parse_tcp_message(tag: u8, payload: &[u8]) -> Option<TcpMessage> {
     }
 }
 
-/// Encode a TCP frame: prepends [size_hi][size_lo] to [tag][payload]
 pub fn encode_tcp_frame(tag: u8, payload: &[u8]) -> Vec<u8> {
-    // Size = tag (1 byte) + payload length
     let size = 1 + payload.len();
     let size_bytes = (size as u16).to_be_bytes();
 
@@ -178,12 +161,10 @@ pub fn encode_tcp_frame(tag: u8, payload: &[u8]) -> Vec<u8> {
     frame
 }
 
-/// Build a game data frame (tag 0x0e)
 pub fn build_game_data_frame(data: &str) -> Vec<u8> {
     encode_tcp_frame(0x0e, data.as_bytes())
 }
 
-/// Build a joystick descriptor frame (tag 0x02)
 pub fn build_joystick_descriptor_frame(
     slot: u8,
     name: &str,
@@ -193,20 +174,18 @@ pub fn build_joystick_descriptor_frame(
 ) -> Vec<u8> {
     let mut payload = vec![
         slot,
-        0, // is_xbox
-        0, // type
+        0,
+        0,
         name.len() as u8,
     ];
     payload.extend_from_slice(name.as_bytes());
     payload.push(axis_count);
-    // axis_types would go here, but we'll skip for now
     payload.push(button_count);
     payload.push(pov_count);
 
     encode_tcp_frame(0x02, &payload)
 }
 
-/// Build a match info frame (tag 0x07)
 pub fn build_match_info_frame(match_name: &str, match_type: u8) -> Vec<u8> {
     let mut payload = Vec::new();
     payload.push(match_name.len() as u8);
@@ -223,10 +202,9 @@ mod tests {
     #[test]
     fn test_encode_decode_frame() {
         let frame = encode_tcp_frame(0x0c, b"Hello Robot");
-        // size = 1 (tag) + 11 (payload) = 12 = 0x000C
         assert_eq!(frame[0], 0x00);
         assert_eq!(frame[1], 0x0C);
-        assert_eq!(frame[2], 0x0c); // tag
+        assert_eq!(frame[2], 0x0c);
         assert_eq!(&frame[3..], b"Hello Robot");
     }
 
@@ -245,7 +223,6 @@ mod tests {
     fn test_frame_reader_partial() {
         let mut reader = TcpFrameReader::new();
         let frame = encode_tcp_frame(0x0c, b"test");
-        // Feed one byte at a time
         for &byte in &frame {
             reader.feed(&[byte]);
         }
@@ -293,14 +270,14 @@ mod tests {
     #[test]
     fn test_game_data_frame() {
         let frame = build_game_data_frame("LRL");
-        assert_eq!(frame[2], 0x0e); // tag
+        assert_eq!(frame[2], 0x0e);
         assert_eq!(&frame[3..], b"LRL");
     }
 
     #[test]
     fn test_joystick_descriptor_frame() {
         let frame = build_joystick_descriptor_frame(0, "Gamepad", 6, 12, 1);
-        assert_eq!(frame[2], 0x02); // tag
-        assert_eq!(frame[3], 0); // slot
+        assert_eq!(frame[2], 0x02);
+        assert_eq!(frame[3], 0);
     }
 }

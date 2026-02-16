@@ -7,7 +7,6 @@ use open_station_protocol::types::*;
 use serde::Serialize;
 use tokio::sync::watch;
 
-/// Flattened state for the UI — serialized and sent via Tauri events
 #[derive(Debug, Clone, Serialize)]
 pub struct UiState {
     // Robot
@@ -34,7 +33,6 @@ pub struct UiState {
     pub alliance_station: u8,
 }
 
-/// Serializable joystick info for the frontend
 #[derive(Debug, Clone, Serialize)]
 pub struct JoystickInfoSerialized {
     pub slot: u8,
@@ -76,29 +74,25 @@ impl Default for UiState {
 
 pub struct AppState {
     ds: DriverStation,
-    #[allow(dead_code)] // Will be used in run loop (Task 13)
+    #[allow(dead_code)]
     ds_rx: Option<DsReceiver>,
     pub joysticks: JoystickManager,
     practice: PracticeMode,
     hotkeys: HotkeyManager,
     config: Config,
 
-    // Current state
     mode: Mode,
     alliance: Alliance,
     enabled: bool,
 
-    // Outbound
     ui_state_tx: watch::Sender<UiState>,
     ui_state_rx: watch::Receiver<UiState>,
 
-    // Stdout forwarding
-    #[allow(dead_code)] // Will be used in run loop (Task 13)
+    #[allow(dead_code)]
     stdout_tx: tokio::sync::mpsc::UnboundedSender<String>,
     stdout_rx: Option<tokio::sync::mpsc::UnboundedReceiver<String>>,
 
-    // Message forwarding
-    #[allow(dead_code)] // Will be used in run loop (Task 13)
+    #[allow(dead_code)]
     message_tx: tokio::sync::mpsc::UnboundedSender<TcpMessage>,
     message_rx: Option<tokio::sync::mpsc::UnboundedReceiver<TcpMessage>>,
 }
@@ -138,22 +132,17 @@ impl AppState {
         app_state
     }
 
-    /// Get a receiver for UI state updates
     pub fn subscribe_state(&self) -> watch::Receiver<UiState> {
         self.ui_state_rx.clone()
     }
 
-    /// Take the stdout receiver (can only be called once)
     pub fn take_stdout_rx(&mut self) -> Option<tokio::sync::mpsc::UnboundedReceiver<String>> {
         self.stdout_rx.take()
     }
 
-    /// Take the message receiver (can only be called once)
     pub fn take_message_rx(&mut self) -> Option<tokio::sync::mpsc::UnboundedReceiver<TcpMessage>> {
         self.message_rx.take()
     }
-
-    // === Commands (called from Tauri) ===
 
     pub fn enable(&mut self) {
         self.ds.enable();
@@ -248,16 +237,7 @@ impl AppState {
         self.update_ui_state();
     }
 
-    pub while let Some(action) = self.hotkeys.try_next_action() {
-            match action {
-                crate::hotkeys::HotkeyAction::Enable => self.enable(),
-                crate::hotkeys::HotkeyAction::Disable => self.disable(),
-                crate::hotkeys::HotkeyAction::EStop => self.estop(),
-                crate::hotkeys::HotkeyAction::AStop => self.a_stop(),
-                crate::hotkeys::HotkeyAction::RescanJoysticks => self.rescan_joysticks(),
-            }
-        }
-        fn poll(&mut self) {
+    pub fn poll(&mut self) {
         self.joysticks.poll();
         self.update_ui_state();
     }
@@ -275,8 +255,6 @@ impl AppState {
     pub fn config(&self) -> &Config {
         &self.config
     }
-
-    // === Internal ===
 
     fn build_ui_state(&self) -> UiState {
         let joystick_data = self.joysticks.get_joystick_data();
@@ -310,7 +288,7 @@ impl AppState {
         let practice_phase = format!("{:?}", self.practice.phase());
 
         UiState {
-            connected: false, // Updated from DS receiver in run loop
+            connected: false,
             code_running: false,
             voltage: 0.0,
             brownout: false,

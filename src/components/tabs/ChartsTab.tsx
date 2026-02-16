@@ -28,7 +28,6 @@ export default function ChartsTab({ state }: Props) {
   const topCanvas = useRef<HTMLCanvasElement>(null);
   const bottomCanvas = useRef<HTMLCanvasElement>(null);
 
-  // Collect data every second
   useEffect(() => {
     const interval = setInterval(() => {
       setData((prev) => {
@@ -37,11 +36,11 @@ export default function ChartsTab({ state }: Props) {
           tripTime: state.trip_time_ms,
           lostPackets: state.lost_packets,
           voltage: state.voltage,
-          cpu: 0, // placeholder
+          cpu: 0,
           mode: state.mode,
           enabled: state.enabled,
         };
-        const cutoff = Date.now() - 300000; // keep 5 min max
+        const cutoff = Date.now() - 300000;
         const next = [...prev.filter((p) => p.time > cutoff), point];
         return next;
       });
@@ -54,7 +53,6 @@ export default function ChartsTab({ state }: Props) {
     const now = Date.now();
     const visible = data.filter((p) => now - p.time <= timeWindow);
 
-    // Draw top chart: trip time (green) + lost packets (orange)
     const topCtx = topCanvas.current?.getContext("2d");
     if (topCtx && topCanvas.current) {
       const w = topCanvas.current.width;
@@ -64,7 +62,6 @@ export default function ChartsTab({ state }: Props) {
       topCtx.fillRect(0, 0, w, h);
 
       if (visible.length > 1) {
-        // Trip time (green)
         topCtx.strokeStyle = "#00bc8c";
         topCtx.lineWidth = 1.5;
         topCtx.beginPath();
@@ -75,7 +72,6 @@ export default function ChartsTab({ state }: Props) {
         });
         topCtx.stroke();
 
-        // Lost packets (orange)
         topCtx.strokeStyle = "#f39c12";
         topCtx.lineWidth = 1.5;
         topCtx.beginPath();
@@ -88,7 +84,6 @@ export default function ChartsTab({ state }: Props) {
       }
     }
 
-    // Draw bottom chart: voltage (yellow) + CPU (red) + mode bar
     const botCtx = bottomCanvas.current?.getContext("2d");
     if (botCtx && bottomCanvas.current) {
       const w = bottomCanvas.current.width;
@@ -98,7 +93,6 @@ export default function ChartsTab({ state }: Props) {
       botCtx.fillRect(0, 0, w, h);
 
       if (visible.length > 1) {
-        // Voltage (yellow)
         botCtx.strokeStyle = "#f1c40f";
         botCtx.lineWidth = 1.5;
         botCtx.beginPath();
@@ -109,7 +103,6 @@ export default function ChartsTab({ state }: Props) {
         });
         botCtx.stroke();
 
-        // Mode indicator bar at bottom
         visible.forEach((p) => {
           const x = ((p.time - (now - timeWindow)) / timeWindow) * w;
           botCtx.fillStyle = p.enabled
