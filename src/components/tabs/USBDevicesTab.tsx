@@ -144,8 +144,6 @@ export default function USBDevicesTab({ state }: Props) {
 
   const selectedJs = state.joysticks.find((j) => j.slot === selectedSlot);
 
-
-
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
