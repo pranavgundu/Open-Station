@@ -80,7 +80,6 @@ pub struct AppState {
     ds_rx: Option<DsReceiver>,
     pub joysticks: JoystickManager,
     practice: PracticeMode,
-    #[allow(dead_code)] // Will be used in run loop (Task 13)
     hotkeys: HotkeyManager,
     config: Config,
 
@@ -110,7 +109,8 @@ impl AppState {
         let (ds, ds_rx) = DriverStation::new(config.team_number, alliance);
         let joysticks = JoystickManager::new(config.joystick_locks.clone());
         let practice = PracticeMode::new(config.practice_timing.clone());
-        let hotkeys = HotkeyManager::new();
+        let mut hotkeys = HotkeyManager::new();
+        hotkeys.start();
 
         let (ui_state_tx, ui_state_rx) = watch::channel(UiState::default());
         let (stdout_tx, stdout_rx) = tokio::sync::mpsc::unbounded_channel();
@@ -248,7 +248,16 @@ impl AppState {
         self.update_ui_state();
     }
 
-    pub fn poll(&mut self) {
+    pub while let Some(action) = self.hotkeys.try_next_action() {
+            match action {
+                crate::hotkeys::HotkeyAction::Enable => self.enable(),
+                crate::hotkeys::HotkeyAction::Disable => self.disable(),
+                crate::hotkeys::HotkeyAction::EStop => self.estop(),
+                crate::hotkeys::HotkeyAction::AStop => self.a_stop(),
+                crate::hotkeys::HotkeyAction::RescanJoysticks => self.rescan_joysticks(),
+            }
+        }
+        fn poll(&mut self) {
         self.joysticks.poll();
         self.update_ui_state();
     }

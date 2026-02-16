@@ -54,15 +54,6 @@ impl HotkeyManager {
                             rdev::Key::Space => {
                                 let _ = tx.send(HotkeyAction::EStop);
                             }
-                            rdev::Key::Return => {
-                                let _ = tx.send(HotkeyAction::Disable);
-                            }
-                            rdev::Key::Backspace => {
-                                let _ = tx.send(HotkeyAction::AStop);
-                            }
-                            rdev::Key::F1 => {
-                                let _ = tx.send(HotkeyAction::RescanJoysticks);
-                            }
                             rdev::Key::LeftBracket
                             | rdev::Key::RightBracket
                             | rdev::Key::BackSlash => {
@@ -72,9 +63,13 @@ impl HotkeyManager {
                                     && pressed.contains(&rdev::Key::BackSlash)
                                 {
                                     let _ = tx.send(HotkeyAction::Enable);
+                                } else {
+                                    let _ = tx.send(HotkeyAction::Disable);
                                 }
                             }
-                            _ => {}
+                            _ => {
+                                let _ = tx.send(HotkeyAction::Disable);
+                            }
                         }
                     }
                     rdev::EventType::KeyRelease(key) => {
