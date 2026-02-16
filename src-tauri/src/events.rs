@@ -6,6 +6,9 @@ use tokio::sync::watch;
 #[allow(dead_code)]
 pub fn spawn_state_emitter(app: AppHandle, mut rx: watch::Receiver<UiState>) {
     tauri::async_runtime::spawn(async move {
+        // Emit initial state
+        let _ = app.emit("robot-state", &*rx.borrow());
+
         loop {
             if rx.changed().await.is_ok() {
                 let state = rx.borrow().clone();

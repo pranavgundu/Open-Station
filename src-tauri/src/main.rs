@@ -28,8 +28,23 @@ fn main() {
                 events::spawn_stdout_emitter(handle.clone(), rx);
             }
             if let Some(rx) = message_rx {
-                events::spawn_message_emitter(handle, rx);
+                events::spawn_message_emitter(handle.clone(), rx);
             }
+
+            // Spawn run loop
+            let run_handle = handle.clone();
+            tauri::async_runtime::spawn(async move {
+                let mut interval = tokio::time::interval(std::time::Duration::from_millis(20));
+                loop {
+                    interval.tick().await;
+                    use tauri::Manager;
+                    let state = run_handle.state::<Mutex<AppState>>();
+                    {
+                        let mut s = state.lock().unwrap();
+                        s.poll();
+                    }
+                }
+            });
 
             Ok(())
         })
