@@ -172,12 +172,7 @@ pub fn build_joystick_descriptor_frame(
     button_count: u8,
     pov_count: u8,
 ) -> Vec<u8> {
-    let mut payload = vec![
-        slot,
-        0,
-        0,
-        name.len() as u8,
-    ];
+    let mut payload = vec![slot, 0, 0, name.len() as u8];
     payload.extend_from_slice(name.as_bytes());
     payload.push(axis_count);
     payload.push(button_count);
